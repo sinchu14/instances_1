@@ -1,0 +1,80 @@
+name: sonarproject/sonarproject
+on:
+  push:
+    branches:
+    - master
+jobs:
+  Build-MavenJob:
+    runs-on:
+      - self-hosted
+      - myagentpool
+    steps:
+    - name: checkout
+      uses: actions/checkout@v4.1.0
+#     # This item has no matching transformer
+#     - task: Maven@4
+#       inputs:
+#         mavenPomFile: pom.xml
+#         publishJUnitResults: true
+#         testResultsFiles: "**/surefire-reports/TEST-*.xml"
+#         javaHomeOption: JDKVersion
+#         mavenVersionOption: Default
+#         mavenAuthenticateFeed: false
+#         effectivePomSkip: false
+    - name: Publish Build Artifact
+      uses: actions/upload-artifact@v4.1.0
+      with:
+        name: drop
+        path: "/home/gunasekaran/drop"
+  Test-TestJob:
+    needs:
+    - Build-MavenJob
+    runs-on:
+      - self-hosted
+      - myagentpool
+    steps:
+    - name: checkout
+      uses: actions/checkout@v4.1.0
+    - name: Download Build Artifact
+      uses: actions/download-artifact@v4.1.0
+      with:
+        name: drop
+    - name: Run Tests
+      run: |-
+        # Your testing commands/scripts here
+        ls /home/gunasekaran/drop  # Example command to list the downloaded build artifact
+  AnalyzeCode-SonarCloudJob:
+    needs:
+    - Test-TestJob
+    runs-on:
+      - self-hosted
+      - myagentpool
+    steps:
+    - name: checkout
+      uses: actions/checkout@v4.1.0
+#     # This item has no matching transformer
+#     - task: SonarCloudPrepare@1
+#       inputs:
+#         SonarCloud: sonarporjectconnection
+#         organization: sinchu14
+#         scannerMode: Other
+    - name: Publish Sonar Report
+      uses: actions/upload-artifact@v4.1.0
+      with:
+        name: sonar-report
+        path: "/home/gunasekaran/drop"
+  PublishArtifacts-PublishArtifactsJob:
+    needs:
+    - AnalyzeCode-SonarCloudJob
+    runs-on:
+      - self-hosted
+      - myagentpool
+    steps:
+    - name: checkout
+      uses: actions/checkout@v4.1.0
+    - name: Download Build Artifact
+      uses: actions/download-artifact@v4.1.0
+      with:
+        name: drop
+    - name: List Downloaded Artifacts
+      run: 'ls /home/gunasekaran/drop  # List the contents of the downloaded build artifact directory'
